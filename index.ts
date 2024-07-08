@@ -14,7 +14,7 @@ async function write_calendar_file(filename: string, data: string) {
   console.log(`Wrote ${filename} to disk.\nfile://${ICAL_PATH}`)
 }
 
-if (import.meta.main === true) {
+if (true) {
 
   const bot_client = new Client({ intents: [GatewayIntentBits.GuildScheduledEvents, GatewayIntentBits.Guilds] });
   let guildICalDict: { [guildId: string]: ICalCalendar } = {};
