@@ -1,5 +1,6 @@
-import { Client, Events, GatewayIntentBits, GuildScheduledEventManager } from 'discord.js';
+import { Client, Events, GatewayIntentBits } from 'discord.js';
 import * as path from "path";
+import * as fs from "node:fs";
 import ical, { ICalCalendarMethod, ICalCalendar, type ICalEventData } from 'ical-generator';
 
 
@@ -8,7 +9,8 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 
 async function write_calendar_file(filename: string, data: string) {
-  Bun.write(path.join(ICAL_PATH, filename), data);
+  filename = "treehouse.ics"
+  fs.writeFile(path.join(ICAL_PATH, filename), data, _ => { });
   console.log(`Wrote ${filename} to disk.\nfile://${ICAL_PATH}`)
 }
 
@@ -26,6 +28,8 @@ if (import.meta.main === true) {
       ical_obj.method(ICalCalendarMethod.PUBLISH)
       const events = await guild.scheduledEvents.fetch();
       for (const event of events.values()) {
+        let end_time = event.scheduledStartAt;
+        end_time?.setSeconds(end_time.getSeconds() + 1);
         let ed: ICalEventData = {
           id: event.id,
           summary: event.name,
@@ -33,7 +37,7 @@ if (import.meta.main === true) {
           location: event.url,
           created: event.createdAt,
           start: event?.scheduledStartAt ?? event.createdAt,
-          end: event?.scheduledEndAt ?? event.createdAt,
+          end: end_time,
         }
         ical_obj.createEvent(ed)
       }
