@@ -4,10 +4,8 @@ import { OFFSET_SECONDS } from "../constants";
 
 export function convertEventData(event: GuildScheduledEvent): ICalEventData {
   let end_time = event.scheduledStartAt;
-
   end_time?.setSeconds(end_time.getSeconds() + OFFSET_SECONDS);
-
-  let ed: ICalEventData = {
+  return {
     id: event.id,
     summary: event.name,
     description: event.description,
@@ -16,5 +14,4 @@ export function convertEventData(event: GuildScheduledEvent): ICalEventData {
     start: event?.scheduledStartAt ?? event.createdAt,
     end: end_time,
   }
-  return ed;
 }
