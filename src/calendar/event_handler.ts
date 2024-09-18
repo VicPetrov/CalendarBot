@@ -1,5 +1,5 @@
 import { type Guild as DiscordGuild, type Client as DiscordClient } from "discord.js";
-import type { GuildScheduledEvent, GuildScheduledEventStatus, PartialGuildScheduledEvent, User } from "discord.js";
+import type { GuildScheduledEvent, PartialGuildScheduledEvent, User } from "discord.js";
 
 import ical, { ICalCalendarMethod } from "ical-generator";
 import { ICalEventStatus } from "ical-generator";
@@ -59,6 +59,13 @@ export class EventHandler {
 
 
   async on_delete(se: GuildScheduledEvent | PartialGuildScheduledEvent) {
+
+    for (let alert of this.alerts) {
+      if (alert.id == se.id) {
+        alert.cancel();
+      }
+    }
+
     let events = this.dict[se.guildId].events();
     for (let i = 0; i < events.length; i++) {
       if (events[i].id() == se.id) {
