@@ -1,10 +1,10 @@
 import type { GuildScheduledEvent } from "discord.js";
 import type { ICalEventData } from "ical-generator";
-import { OFFSET_SECONDS } from "../constants";
+import { ICAL_EVENT_DURATION } from "../defaults";
 
 export function processEventData(event: GuildScheduledEvent): ICalEventData {
   let end_time = event.scheduledStartAt;
-  end_time?.setSeconds(end_time.getSeconds() + OFFSET_SECONDS);
+  end_time?.setSeconds(end_time.getSeconds() + ICAL_EVENT_DURATION);
   return {
     id: event.id,
     summary: event.name,

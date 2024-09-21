@@ -1,20 +1,23 @@
 import type { Attendee } from "./attendee";
-import { bot_client } from "../settings/client";
+import { bot_client } from "../bot_client";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, type Guild, PermissionFlagsBits, TextChannel } from "discord.js";
 
 export class AlertEventData {
   id: string;
   guild: Guild;
   start: Date | null;
+  leadTime: Date | null;
   attending: Array<Attendee> = [];
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 
+  constructor(id: string, guild: Guild, start: Date | null, leadTime: Date | null) {
 
-  constructor(id: string, guild: Guild, start: Date | null) {
     this.id = id;
     this.start = start;
     this.guild = guild;
+    this.leadTime = leadTime;
+
     if (start && start!.getTime() > Date.now()) {
       this.timeoutId = setTimeout(() => {
         const botMember = guild.members.cache.get(bot_client.user!.id);
@@ -27,32 +30,47 @@ export class AlertEventData {
 
             // Check if the bot has permission to send messages
             if (permissions && permissions.has(PermissionFlagsBits.SendMessages)) {
-              const event = guild.scheduledEvents.cache.get(this.id);
+              let event = guild.scheduledEvents.cache.get(this.id);
+              for (let member of event!.channel!.members.values()) {
+                this.attending.filter(alert_member => alert_member.id !== member.id);
+              }
               let atty_string = this.attending.map(atty => `<@${atty.id}>`).join(" ");
-              let msg = `${event?.name} is scheduled to happen <t:${Math.floor(start.getTime() / 1000)}:R>, ${atty_string} please join!\n`;
-              const joinButton = new ButtonBuilder()
-                .setLabel('Join Event')
-                .setStyle(ButtonStyle.Link) // Set the style to link
-                .setURL(event!.url); // URL of the event
+              let msg = `${event?.url}\n${event?.name} scheduled to start <t:${Math.floor(start.getTime() / 1000)}:R>, ${atty_string} please join!\n`;
+              let attendee_status_emebed = new EmbedBuilder()
+                .setFields({ name: "waitlist", value: this.attending.map(atty => atty.tag).join("\n") || "None" });
+              let components = [];
+              let showButton = new ButtonBuilder()
+                .setLabel("Will join")
+                .setStyle(ButtonStyle.Success) // Set the style to link
+                .setCustomId(`will_show${event?.id}`);
+              components.push(showButton);
 
-              const row = new ActionRowBuilder<ButtonBuilder>().addComponents(joinButton);
-              let embed = new EmbedBuilder().setURL(event!.url).setThumbnail(event!.coverImageURL());
-              channel.send({ content: msg, embeds: [embed], components: [row] }).then(sentMessage => {
-                // Log the sent message details to the console
-                console.log(`Sent message: ${sentMessage.content} `);
-                console.log(`Message ID: ${sentMessage.id} `);
-                console.log(`Channel ID: ${sentMessage.channel.id} `);
-                console.log(`Attendees: ${this.attending}`);
-              })
+              let noshowButton = new ButtonBuilder()
+                .setLabel("Can't join")
+                .setStyle(ButtonStyle.Danger)
+                .setCustomId(`no_show${event?.id}`);
+              components.push(noshowButton);
+
+              if (event?.channel) {
+                let joinChannelButton = new ButtonBuilder()
+                  .setLabel("Event link")
+                  .setStyle(ButtonStyle.Link)
+                  .setURL(event.channel.url);
+                components.push(joinChannelButton);
+              }
+
+              let row = new ActionRowBuilder<ButtonBuilder>().addComponents(components);
+
+              channel.send({ content: msg, components: [row], embeds: [attendee_status_emebed] })
                 .catch(error => {
                   console.error('Error sending message:', error);
                 });
 
-              break; // Break out of the loop on the first matching channel
+              break; // Break out of the loop on the first writable channel
             }
           }
         }
-      }, start!.getTime() - Date.now());
+      }, leadTime!.getTime() - Date.now());
     }
   }
   cancel() {

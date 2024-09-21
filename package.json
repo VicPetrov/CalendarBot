@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "discord.js": "^14.15.3",
-    "ical-generator": "^7.1.0"
+    "ical-generator": "^7.1.0",
+    "later": "^1.2.0"
   }
 }

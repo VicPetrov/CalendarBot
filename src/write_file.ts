@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "path";
-import { ICAL_PATH, FILENAME } from "./constants";
+import { ICAL_PATH, FILENAME } from "./defaults";
 import { type Path } from "typescript";
 
 const writeFile = (filePath: Path | string, folder: string, data: string, callback: any) => {
