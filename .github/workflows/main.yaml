@@ -75,4 +75,4 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.sha }}
         name: Release ${{ github.sha }}
-        artifact: calendarbot-docker-image
+        artifacts: calendarbot-docker-image
