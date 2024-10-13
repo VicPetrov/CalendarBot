@@ -1,4 +1,3 @@
-
 name: Build and Release CalendarBot
 
 on:
@@ -27,27 +26,43 @@ jobs:
 
     # Build the Bun application targeting Node.js
     - name: Build CalendarBot (Target Node)
-      run: bun build index.ts --target=node
+      run: bun build index.ts --target=node --outdir=release/
 
+    # Step 4: Upload the build as an artifact
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: bun-build
+        path: release/  # Upload the compiled output directory
     # Setup Docker
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-
-    # Login to Docker Hub or your container registry (optional if not required)
-    # - name: Log in to Docker Hub
-    #   uses: docker/login-action@v2
-    #   with:
-    #     username: ${{ secrets.DOCKER_USERNAME }}
-    #     password: ${{ secrets.DOCKER_PASSWORD }}
-
-    # Build Docker image for Node.js runtime
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: bun-build
+    # Build Docker image
     - name: Build Docker Image
       run: |
         docker build -t VicPetrov/calendarbot:latest .
-        docker tag VicPetrov/calendarbot:latest VicPetrov/calendarbot:${{ github.sha }}
+    
+    # Save Docker image as a tar file
+    - name: Save Docker Image
+      run: docker save VicPetrov/calendarbot:latest -o calendarbot_image.tar
+
+    # Upload Docker image as an artifact
+    - name: Upload Docker Image Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: calendarbot-docker-image
+        path: calendarbot_image.tar
+
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for interacting with the repository contents
+      actions: write
     steps:
     # Checkout the code
     - name: Checkout repository
@@ -58,7 +73,6 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.sha }}
+        tag: v0.0.0
         name: Release ${{ github.sha }}
-        files: |
-          Dockerfile
+        artifacts: calendarbot-docker-image
