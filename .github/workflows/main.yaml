@@ -73,6 +73,6 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ github.sha }}
+        tag: v0.0.0
         name: Release ${{ github.sha }}
         artifacts: calendarbot-docker-image
