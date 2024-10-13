@@ -35,11 +35,11 @@ jobs:
     # Build Docker image
     - name: Build Docker Image
       run: |
-        docker build -t your-username/calendarbot:latest .
+        docker build -t VicPetrov/calendarbot:latest .
     
     # Save Docker image as a tar file
     - name: Save Docker Image
-      run: docker save your-username/calendarbot:latest -o calendarbot_image.tar
+      run: docker save VicPetrov/calendarbot:latest -o calendarbot_image.tar
 
     # Upload Docker image as an artifact
     - name: Upload Docker Image Artifact
