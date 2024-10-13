@@ -60,6 +60,9 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for interacting with the repository contents
+      actions: write
     steps:
     # Checkout the code
     - name: Checkout repository
