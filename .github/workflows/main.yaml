@@ -119,5 +119,5 @@ release:
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @calendarbot_image.tar \
-            "${upload_url}?calendarbot_image.tar"
+            "${upload_url}?calendarbot_image.tar" #1
   
