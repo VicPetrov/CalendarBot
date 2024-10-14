@@ -56,23 +56,68 @@ jobs:
       with:
         name: calendarbot-docker-image
         path: calendarbot_image.tar
-
-  release:
-    needs: build
+release:
+    needs: docker
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Required for interacting with the repository contents
-      actions: write
-    steps:
-    # Checkout the code
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    permissions:     
+      contents: write
+      actions: write 
 
-    # Upload Docker image to GitHub releases as an artifact
-    - name: Create Release
-      uses: ncipollo/release-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: v0.0.0
-        name: Release ${{ github.sha }}
-        artifacts: calendarbot-docker-image
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Download the Docker image tarball
+      - name: Download Docker image tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: calendarbot-docker-image
+
+      # Step 3: Get the latest tag or create a new one (you can automate tag increment as needed)
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "::set-output name=LATEST_TAG::$latest_tag"
+
+      - name: Increment tag (optional)
+        id: increment_tag
+        run: |
+          latest_tag=${{ steps.get_tag.outputs.LATEST_TAG }}
+          echo "Latest tag is $latest_tag"
+          latest_tag=${latest_tag#v}
+          IFS='.' read -r -a parts <<< "$latest_tag"
+          major="${parts[0]}"
+          minor="${parts[1]}"
+          patch="${parts[2]}"
+          patch=$((patch + 1))
+          new_tag="v$major.$minor.$patch"
+          echo "::set-output name=NEW_TAG::$new_tag"
+
+      # Step 4: Create a GitHub release
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.increment_tag.outputs.NEW_TAG }}
+          name: Release ${{ steps.increment_tag.outputs.NEW_TAG }}
+          body: "Release with Docker image."
+          draft: false
+          prerelease: false
+
+      # Step 5: Upload the Docker image file to the release
+      - name: Upload Docker image to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          upload_url=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .upload_url | sed "s/{?name,label}//")
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @calendarbot_image.tar \
+            "${upload_url}?calendarbot_image.tar"
+  
