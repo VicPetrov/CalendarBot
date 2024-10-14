@@ -55,9 +55,9 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: calendarbot-docker-image
-        path: calendarbot_image.tar
-release:
-    needs: docker
+        path: calendarbot_image.ta
+  release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:     
       contents: write
