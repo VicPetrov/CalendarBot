@@ -56,8 +56,8 @@ jobs:
       with:
         name: calendarbot-docker-image
         path: calendarbot_image.tar
-release:
-    needs: docker
+  release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:     
       contents: write
@@ -108,16 +108,15 @@ release:
           draft: false
           prerelease: false
 
-      # Step 5: Upload the Docker image file to the release
+      # # Step 5: Install GitHub CLI (gh)
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh -y
+
+      # Step 6: Upload Docker image using GitHub CLI
       - name: Upload Docker image to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          upload_url=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .upload_url | sed "s/{?name,label}//")
-          curl -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary @calendarbot_image.tar \
-            "${upload_url}?calendarbot_image.tar" #1
-  
+          gh release upload ${{ steps.increment_tag.outputs.NEW_TAG }} calendarbot_image_${{ steps.increment_tag.outputs.NEW_TAG }}.tar

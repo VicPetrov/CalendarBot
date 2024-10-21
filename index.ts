@@ -14,6 +14,8 @@ bot_client.once(Events.ClientReady, (client: Client) => {
       client.on(Events.InteractionCreate, (interaction) => {
         if (interaction.isButton()) {
           handlerInstance.event_actionrow(interaction);
+        } else if (interaction.isChatInputCommand()) {
+          handlerInstance.slash_commands(interaction);
         }
       });
     }

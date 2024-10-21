@@ -128,11 +128,11 @@ export class EventHandler {
     const { commandName } = interaction;
     if (commandName === "alert") {
       const minutes = interaction.options.get('minutes');
-      if (minutes?.value) {
-        this.alert_offset = parseInt(minutes.value.toString());
+      if (minutes) {
+        this.alert_offset = parseInt(minutes?.value?.toString() || "5");
         this.fetch_events(interaction.guild);
       }
-      interaction.reply(`alert lead time is set to: ${this.alert_offset}`)
+      await interaction.reply(`alert lead time is set to: ${this.alert_offset}`)
     }
   }
   async event_actionrow(interaction: ButtonInteraction) {
